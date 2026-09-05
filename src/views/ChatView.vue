@@ -116,10 +116,13 @@ const autoResize = () => {
 }
 
 const onKeydown = (e) => {
-  if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-    e.preventDefault()
-    send()
-  }
+  if (e.key !== 'Enter') return
+  // 输入法组合中（拼音/日文候选框未确认）不发送，避免误提交
+  if (e.isComposing || e.keyCode === 229) return
+  // Shift + Enter 换行；Enter / Ctrl(Cmd) + Enter 发送
+  if (e.shiftKey) return
+  e.preventDefault()
+  send()
 }
 
 const send = async () => {

@@ -2,7 +2,7 @@
   <div class="page scroll-area">
     <header class="page-header">
       <div>
-        <h1 class="page-title">数字员工墙（{{ employees.length }}人）</h1>
+        <h1 class="page-title">员工办公室（{{ employees.length }}人）</h1>
         <p class="page-subtitle">点击任意员工卡片，即可与对应岗位的 AI 同事对话协作</p>
       </div>
       <button class="btn-primary" @click="goSettings">

@@ -32,7 +32,7 @@
 │   │   └── EmployeeCard.vue # 数字员工卡片
 │   ├── views/
 │   │   ├── HomeView.vue      # 首页（快捷入口/最近对话/推荐员工）
-│   │   ├── EmployeesView.vue # 数字员工墙（10 人网格）
+│   │   ├── EmployeesView.vue # 员工办公室（10 人网格）
 │   │   ├── ChatView.vue      # AI 对话页（SSE 流式渲染）
 │   │   ├── SkillsView.vue    # 我的技能（场景模板）
 │   │   ├── HelpView.vue      # 帮助 / FAQ
