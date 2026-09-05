@@ -38,8 +38,9 @@
       <div class="field">
         <label>模型</label>
         <select v-model="form.model">
-          <option value="deepseek-chat">deepseek-chat（V3 通用对话）</option>
-          <option value="deepseek-reasoner">deepseek-reasoner（R1 深度推理）</option>
+          <option value="deepseek-v4-flash">deepseek-v4-flash（V4 Flash，快速通用，推荐）</option>
+          <option value="deepseek-chat">deepseek-chat（通用对话）</option>
+          <option value="deepseek-reasoner">deepseek-reasoner（深度推理）</option>
         </select>
       </div>
 

@@ -5,7 +5,7 @@ const STORAGE_KEY = 'hr-helper-settings'
 const defaults = {
   apiKey: '',
   baseUrl: 'https://api.deepseek.com',
-  model: 'deepseek-chat'
+  model: 'deepseek-v4-flash'
 }
 
 function load() {
