@@ -1,65 +1,68 @@
-# 项目上下文
+# AGENTS.md
 
-### 版本技术栈
+## 项目概览
 
-- **Framework**: Next.js 16 (App Router)
-- **Core**: React 19
-- **Language**: TypeScript 5
-- **UI 组件**: shadcn/ui (基于 Radix UI)
-- **Styling**: Tailwind CSS 4
+**HR Helper** —— HR 数字员工工作台（Vue 3 SPA）。左侧导航，右侧主区；点击「数字员工」卡片进入与该岗位 AI 的对话窗口，对话通过服务端代理调用 DeepSeek Chat API（SSE 流式）。
+
+- **Framework**：Vue 3（Composition API，`<script setup>`，纯 JavaScript）
+- **Build**：Vite
+- **State**：Pinia（`settings`、`chat` 两个 store）
+- **Routing**：Vue Router（history 模式）
+- **样式**：全局 CSS 变量 + 组件 scoped CSS（无 Tailwind / UI 库），设计规范见 `DESIGN.md`
+
+## 构建与运行
+
+- 包管理器：**仅 pnpm**
+- 开发：`pnpm run dev`（Vite，端口取 `DEPLOY_RUN_PORT`，HMR 路径 `/hot/vite-hmr`）
+- 构建：`pnpm run build`（产物在 `dist/`）
+- 生产：`node server.js`（零依赖 Node HTTP 服务：静态托管 `dist/` + SPA 回退 + `/api/deepseek` 代理透传 SSE）
+- DeepSeek 代理：
+  - 开发：Vite `server.proxy` 把 `/api/deepseek/*` 转发到 `https://api.deepseek.com/*`
+  - 生产：`server.js` 中用 `https.request` 透传请求体与 `Authorization` 头、流式 pipe 响应
+  - 前端请求 `POST /api/deepseek/chat/completions`，`Authorization: Bearer <key>` 由代理转发到官方
 
 ## 目录结构
 
 ```
-├── public/                 # 静态资源
-├── scripts/                # 构建与启动脚本
-│   ├── build.sh            # 构建脚本
-│   ├── dev.sh              # 开发环境启动脚本
-│   ├── prepare.sh          # 预处理脚本
-│   └── start.sh            # 生产环境启动脚本
+├── public/avatars/          # 10 位数字员工头像（本地静态文件）
 ├── src/
-│   ├── app/                # 页面路由与布局
-│   ├── components/ui/      # Shadcn UI 组件库
-│   ├── hooks/              # 自定义 Hooks
-│   ├── lib/                # 工具库
-│   │   └── utils.ts        # 通用工具函数 (cn)
-│   └── server.ts           # 自定义服务端入口
-├── next.config.ts          # Next.js 配置
-├── package.json            # 项目依赖管理
-└── tsconfig.json           # TypeScript 配置
+│   ├── components/
+│   │   ├── AppIcon.vue      # 统一 SVG 图标库（按 name 取路径）
+│   │   ├── Sidebar.vue      # 左侧导航 + 历史记录抽屉 + API 状态
+│   │   └── EmployeeCard.vue # 数字员工卡片
+│   ├── views/
+│   │   ├── HomeView.vue      # 首页（快捷入口/最近对话/推荐员工）
+│   │   ├── EmployeesView.vue # 数字员工墙（10 人网格）
+│   │   ├── ChatView.vue      # AI 对话页（SSE 流式渲染）
+│   │   ├── SkillsView.vue    # 我的技能（场景模板）
+│   │   ├── HelpView.vue      # 帮助 / FAQ
+│   │   ├── HistoryView.vue   # 历史记录
+│   │   └── SettingsView.vue  # DeepSeek API Key 配置
+│   ├── stores/
+│   │   ├── settings.js       # apiKey/baseUrl/model，localStorage 持久化
+│   │   └── chat.js           # 按 employeeId 分会话，localStorage 持久化
+│   ├── services/deepseek.js  # SSE 流式调用（fetch reader 解析 data: 行）
+│   ├── data/
+│   │   ├── employees.js      # 10 位员工定义（含 systemPrompt/greetings）
+│   │   └── skills.js         # 10 个技能模板（关联员工 + 预设指令）
+│   ├── utils/markdown.js     # 轻量 Markdown -> HTML（对话渲染）
+│   ├── router/index.js
+│   ├── styles/main.css       # Design Tokens / 全局样式
+│   └── main.js
+└── vite.config.js
 ```
 
-- 项目文件（如 app 目录、pages 目录、components 等）默认初始化到 `src/` 目录下。
+## 关键约定
 
-## 包管理规范
+1. **API Key 流向**：用户在设置页填写 → localStorage 保存 → 每次对话随请求体发给同源 `/api/deepseek/chat` → Vite 代理转发时透传 `Authorization` 头（代理自动携带）。前端绝不硬编码 Key。
+2. **流式协议**：前端请求 `POST /api/deepseek/chat/completions`，header 带 `Authorization: Bearer <key>`，body 为 `{ model, messages, stream: true, temperature }`。代理（Vite proxy / server.js）透传至 `https://api.deepseek.com/chat/completions`。响应为标准 OpenAI SSE（`data: {...}` / `data: [DONE]`），前端逐块解析 `choices[0].delta.content` 追加渲染。
+3. **对话存储**：按员工 id 分键存 localStorage（`hr-helper-conversations`）；「已完成 N 任务」= 用户消息轮次。
+4. **技能模板**：`SkillsView` 点击后把预设 prompt 写入 `sessionStorage`（`hr-helper-skill-prompt:<employeeId>`），跳转对话页后自动填入输入框。
+5. **新增员工**：在 `src/data/employees.js` 增加对象（id/name/type/avatar/desc/greetings/systemPrompt），头像放 `public/avatars/`。
+6. **图标**：统一用 `<AppIcon name="..." />`，新增图标在 `AppIcon.vue` 的 `ICONS` 中加 path。
+7. 代码标点全部半角；中文仅用于文案。
 
-**仅允许使用 pnpm** 作为包管理器，**严禁使用 npm 或 yarn**。
-**常用命令**：
-- 安装依赖：`pnpm add <package>`
-- 安装开发依赖：`pnpm add -D <package>`
-- 安装所有依赖：`pnpm install`
-- 移除依赖：`pnpm remove <package>`
+## 常见问题定位
 
-## 开发规范
-
-### 编码规范
-
-- 默认按 TypeScript `strict` 心智写代码；优先复用当前作用域已声明的变量、函数、类型和导入，禁止引用未声明标识符或拼错变量名。
-- 禁止隐式 `any` 和 `as any`；函数参数、返回值、解构项、事件对象、`catch` 错误在使用前应有明确类型或先完成类型收窄，并清理未使用的变量和导入。
-
-### next.config 配置规范
-
-- 配置的路径不要写死绝对路径，必须使用 path.resolve(__dirname, ...)、import.meta.dirname 或 process.cwd() 动态拼接。
-
-### Hydration 问题防范
-
-1. 严禁在 JSX 渲染逻辑中直接使用 typeof window、Date.now()、Math.random() 等动态数据。**必须使用 'use client' 并配合 useEffect + useState 确保动态内容仅在客户端挂载后渲染**；同时严禁非法 HTML 嵌套（如 <p> 嵌套 <div>）。
-2. **禁止使用 head 标签**，优先使用 metadata，详见文档：https://nextjs.org/docs/app/api-reference/functions/generate-metadata
-   1. 三方 CSS、字体等资源可在 `globals.css` 中顶部通过 `@import` 引入或使用 next/font
-   2. preload, preconnect, dns-prefetch 通过 ReactDOM 的 preload、preconnect、dns-prefetch 方法引入
-   3. json-ld 可阅读 https://nextjs.org/docs/app/guides/json-ld
-
-## UI 设计与组件规范 (UI & Styling Standards)
-
-- 模板默认预装核心组件库 `shadcn/ui`，位于`src/components/ui/`目录下
-- Next.js 项目**必须默认**采用 shadcn/ui 组件、风格和规范，**除非用户指定用其他的组件和规范。**
+- 对话报错：先看页面气泡内错误信息；未配置 Key 时输入区有提示条，去 `/settings`。
+- 生产环境 404：确认走的是 `vite preview`（带代理），不要用裸静态服务器（会丢失 `/api` 代理）。
