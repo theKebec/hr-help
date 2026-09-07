@@ -5,7 +5,7 @@ import path from 'node:path'
 import https from 'node:https'
 
 const DIST_DIR = path.resolve(process.cwd(), 'dist')
-const PORT = Number(process.env.DEPLOY_RUN_PORT) || 5000
+const PORT = Number(process.env.DEPLOY_RUN_PORT) || 7100
 const DEEPSEEK_HOST = 'api.deepseek.com'
 
 const MIME = {

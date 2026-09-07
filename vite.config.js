@@ -21,10 +21,10 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: Number(process.env.DEPLOY_RUN_PORT) || 5000,
+    port: Number(process.env.DEPLOY_RUN_PORT) || 7100,
     strictPort: true,
     hmr: {
-      port: Number(process.env.DEPLOY_RUN_PORT) || 5000,
+      port: Number(process.env.DEPLOY_RUN_PORT) || 7100,
       path: '/hot/vite-hmr'
     },
     proxy: {
@@ -33,7 +33,7 @@ export default defineConfig({
   },
   preview: {
     host: '0.0.0.0',
-    port: Number(process.env.DEPLOY_RUN_PORT) || 5000,
+    port: Number(process.env.DEPLOY_RUN_PORT) || 7100,
     strictPort: true,
     proxy: {
       '/api/deepseek': deepseekProxy
